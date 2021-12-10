@@ -1,0 +1,378 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2022.6">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+    span.s1 {font: 12.0px 'Apple Color Emoji'}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="utf-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Demo: Route avoidance with the Directions API and Turf.js&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Mapbox GL JS --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;link</p>
+<p class="p1"><span class="Apple-converted-space">      </span>href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>rel="stylesheet"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>/&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Mapbox GL Directions --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;link</p>
+<p class="p1"><span class="Apple-converted-space">      </span>rel="stylesheet"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.css"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type="text/css"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>/&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Turf &amp; Polyline --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://npmcdn.com/@turf/turf/turf.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>body {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #000099;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font: 400 15px/22px 'Tahoma', 'Helvetica Neue', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>* {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>box-sizing: border-box;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>#map {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>position: absolute;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>left: 35%;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>top: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>bottom: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>width: 65%;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.sidebar {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>position: absolute;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>width: 35%;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>height: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>top: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>left: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>overflow: hidden;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-right: 1px solid rgba(0, 0, 0, 0.25);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>h1 {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 22px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-weight: 400;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>a {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #404040;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>text-decoration: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>a:hover {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #101010;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.heading {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: #fff;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-bottom: 1px solid #eee;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>min-height: 60px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>line-height: 60px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 0 10px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>height: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>overflow: auto;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding-bottom: 60px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-bottom: 1px solid #eee;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>text-decoration: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item:last-child {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-bottom: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item .title {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #00853e;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-weight: 700;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item .warning {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: red;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-weight: 700;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item .title small {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-weight: 400;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item.active .title,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item .title:hover {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #8cc63f;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.reports .item.active {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background-color: #f8f8f8;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>::-webkit-scrollbar {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>width: 3px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>height: 3px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-left: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: rgba(0, 0, 0, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>::-webkit-scrollbar-track {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>::-webkit-scrollbar-thumb {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: #00853e;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-radius: 0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/head&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="map"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sidebar"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="heading"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h1&gt;ROUTES&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div id="reports" class="reports"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>mapboxgl.accessToken = 'pk.eyJ1IjoibWFja2VuemllY3J1bWIiLCJhIjoiY2t1Y3F2cXR6MTJ5YTJucWo4Yzd5cnhoZiJ9.MEgl_1Kl4bXpMIjobocyoQ';</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const map = new mapboxgl.Map({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>container: 'map', // container id</p>
+<p class="p1"><span class="Apple-converted-space">        </span>style: 'mapbox://styles/mackenziecrumb/ckwy3py9y1ns214o0kii8acl7',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>center: [-79.90832, 43.24802], // starting position</p>
+<p class="p1"><span class="Apple-converted-space">        </span>zoom: 10 // starting zoom</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const directions = new MapboxDirections({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>accessToken: mapboxgl.accessToken,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>unit: 'metric',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>profile: 'mapbox/driving',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>alternatives: 'false',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>geometries: 'geojson'</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>map.scrollZoom.enable();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>map.addControl(directions, 'top-right');</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">     </span>const clearances = {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>type: 'FeatureCollection',</p>
+<p class="p1"><span class="Apple-converted-space">  </span>features: [</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.9191, 43.2667]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "13' 2"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.8755, 43.2737]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "13' 7"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.8607, 43.2552]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "13' 7"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.8614, 43.2207]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "13' 7"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.7992, 43.2339]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "12' 0"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.8702, 43.2492]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "13' 6"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.8540, 43.2638]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "13' 6"</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>type: 'Feature',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>geometry: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'Point',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>coordinates: [-79.8527, 43.2527]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>},</p>
+<p class="p1"><span class="Apple-converted-space">      </span>properties: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearance: "11' 6"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>]</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const obstacle = turf.buffer(clearances, 0.25, { units: 'kilometers' });</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>map.on('load', () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>map.addLayer({</p>
+<p class="p1"><span class="Apple-converted-space">          </span>id: 'clearances',</p>
+<p class="p1"><span class="Apple-converted-space">          </span>type: 'fill',</p>
+<p class="p1"><span class="Apple-converted-space">          </span>source: {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>type: 'geojson',</p>
+<p class="p1"><span class="Apple-converted-space">            </span>data: obstacle</p>
+<p class="p1"><span class="Apple-converted-space">          </span>},</p>
+<p class="p1"><span class="Apple-converted-space">          </span>layout: {},</p>
+<p class="p1"><span class="Apple-converted-space">          </span>paint: {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>'fill-color': '#f03b20',</p>
+<p class="p1"><span class="Apple-converted-space">            </span>'fill-opacity': 0.5,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>'fill-outline-color': '#f03b20'</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Create sources and layers for the returned routes.</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// There will be a maximum of 3 results from the Directions API.</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// We use a loop to create the sources and layers.</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (let i = 0; i &lt; 3; i++) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>map.addSource(`route${i}`, {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>type: 'geojson',</p>
+<p class="p1"><span class="Apple-converted-space">            </span>data: {</p>
+<p class="p1"><span class="Apple-converted-space">              </span>type: 'Feature'</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>map.addLayer({</p>
+<p class="p1"><span class="Apple-converted-space">            </span>id: `route${i}`,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>type: 'line',</p>
+<p class="p1"><span class="Apple-converted-space">            </span>source: `route${i}`,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>layout: {</p>
+<p class="p1"><span class="Apple-converted-space">              </span>'line-join': 'round',</p>
+<p class="p1"><span class="Apple-converted-space">              </span>'line-cap': 'round'</p>
+<p class="p1"><span class="Apple-converted-space">            </span>},</p>
+<p class="p1"><span class="Apple-converted-space">            </span>paint: {</p>
+<p class="p1"><span class="Apple-converted-space">              </span>'line-color': '#cccccc',</p>
+<p class="p1"><span class="Apple-converted-space">              </span>'line-opacity': 0.5,</p>
+<p class="p1"><span class="Apple-converted-space">              </span>'line-width': 13,</p>
+<p class="p1"><span class="Apple-converted-space">              </span>'line-blur': 0.5</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>});</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>directions.on('route', (event) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const reports = document.getElementById('reports');</p>
+<p class="p1"><span class="Apple-converted-space">        </span>reports.innerHTML = '';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const report = reports.appendChild(document.createElement('div'));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Add IDs to the routes</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const routes = event.route.map((route, index) =&gt; ({</p>
+<p class="p1"><span class="Apple-converted-space">          </span>...route,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>id: index</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Hide all routes by setting the opacity to zero.</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (let i = 0; i &lt; 3; i++) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>map.setLayoutProperty(`route${i}`, 'visibility', 'none');</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (const route of routes) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Make each route visible, by setting the opacity to 50%.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>map.setLayoutProperty(`route${route.id}`, 'visibility', 'visible');</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Get GeoJSON LineString feature of route</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const routeLine = polyline.toGeoJSON(route.geometry);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Update the data for the route, updating the visual.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>map.getSource(`route${route.id}`).setData(routeLine);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>const isClear = turf.booleanDisjoint(obstacle, routeLine) === true;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>const collision = isClear ? 'is good!' : 'is bad.';</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const emoji = isClear ? '<span class="s1">✔️</span>' : '<span class="s1">⚠️</span>';</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const detail = isClear ? 'does not go' : 'goes';</p>
+<p class="p1"><span class="Apple-converted-space">          </span>report.className = isClear ? 'item' : 'item warning';</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (isClear) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>map.setPaintProperty(`route${route.id}`, 'line-color', '#74c476');</p>
+<p class="p1"><span class="Apple-converted-space">          </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>map.setPaintProperty(`route${route.id}`, 'line-color', '#de2d26');</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Add a new report section to the sidebar.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Assign a unique `id` to the report.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>report.id = `report-${route.id}`;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Add the response to the individual report created above.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const heading = report.appendChild(document.createElement('h3'));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Set the class type based on clear value.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>heading.className = isClear ? 'title' : 'warning';</p>
+<p class="p1"><span class="Apple-converted-space">          </span>heading.innerHTML = `${emoji} Route ${route.id + 1} ${collision}`;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Add details to the individual report.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const details = report.appendChild(document.createElement('div'));</p>
+<p class="p1"><span class="Apple-converted-space">          </span>details.innerHTML = `This route ${detail} through an avoidance area.`;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>report.appendChild(document.createElement('hr'));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+<p class="p2"><br></p>
+</body>
+</html>
